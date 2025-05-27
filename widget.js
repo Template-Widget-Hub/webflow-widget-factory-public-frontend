@@ -28,21 +28,29 @@ class WidgetShell {
     
     console.log('Initializing widget:', this.widgetSlug);
     
-    // Default Supabase endpoints - update these with your project URL
-    const SUPABASE_URL = 'https://yailbankhodrzsdmxxda.supabase.co';
-    const N8N_WEBHOOK_URL = 'https://n8n.template-hub.com/webhook/process'; // Update with your n8n URL
-    
-    this.presignEndpoint = rootEl.dataset.presignEndpoint || 
-                          opts.presignEndpoint || 
-                          `${SUPABASE_URL}/functions/v1/presign`;
-    this.processEndpoint = rootEl.dataset.processEndpoint || 
-                          opts.processEndpoint || 
-                          N8N_WEBHOOK_URL;
+    try {
+      // Default Supabase endpoints - update these with your project URL
+      const SUPABASE_URL = 'https://yailbankhodrzsdmxxda.supabase.co';
+      const N8N_WEBHOOK_URL = 'https://n8n.template-hub.com/webhook/process'; // Update with your n8n URL
+      
+      console.log('Setting endpoints...');
+      this.presignEndpoint = rootEl.dataset.presignEndpoint || 
+                            opts.presignEndpoint || 
+                            `${SUPABASE_URL}/functions/v1/presign`;
+      this.processEndpoint = rootEl.dataset.processEndpoint || 
+                            opts.processEndpoint || 
+                            N8N_WEBHOOK_URL;
+      console.log('Endpoints set:', { presignEndpoint: this.presignEndpoint, processEndpoint: this.processEndpoint });
 
-    /* ─ Child components (data-component) ─ */
-    this.fileInput   = rootEl.querySelector('[data-component="FileInput"]');
-    this.progressBar = rootEl.querySelector('[data-component="ProgressBar"]');
-    this.resultCard  = rootEl.querySelector('[data-component="ResultCard"]');
+      /* ─ Child components (data-component) ─ */
+      console.log('Finding child components...');
+      this.fileInput   = rootEl.querySelector('[data-component="FileInput"]');
+      this.progressBar = rootEl.querySelector('[data-component="ProgressBar"]');
+      this.resultCard  = rootEl.querySelector('[data-component="ResultCard"]');
+    } catch (e) {
+      console.error('Error during initialization:', e);
+      throw e;
+    }
 
     console.log('Widget components found:', {
       fileInput: !!this.fileInput,
@@ -376,5 +384,38 @@ if (!document.getElementById('widget-dropzone-styles')) {
   styleEl.textContent = dropzoneStyles;
   document.head.appendChild(styleEl);
 }
+
+// Auto-initialization
+function initializeWidgets() {
+  console.log('Looking for widgets to initialize...');
+  const widgets = document.querySelectorAll('[data-widget], [data-widget-id]');
+  console.log(`Found ${widgets.length} widget(s) to initialize`);
+  
+  widgets.forEach((el, index) => {
+    try {
+      const widgetId = el.dataset.widget || el.dataset.widgetId;
+      console.log(`Initializing widget ${index + 1}/${widgets.length}: ${widgetId}`);
+      new WidgetShell(el);
+      console.log(`✅ Widget initialized: ${widgetId}`);
+    } catch (err) {
+      console.error('❌ Widget init failed:', err);
+    }
+  });
+
+  // Broadcast a ready event
+  window.dispatchEvent(new CustomEvent('widgetfactory:ready', {
+    detail: { widgetCount: widgets.length }
+  }));
+}
+
+// Initialize when DOM is ready
+if (document.readyState === 'loading') {
+  document.addEventListener('DOMContentLoaded', initializeWidgets);
+} else {
+  initializeWidgets();
+}
+
+// Also expose for manual init
+window.WidgetShell = WidgetShell;
 
 export default WidgetShell;

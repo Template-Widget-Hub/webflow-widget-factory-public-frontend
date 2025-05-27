@@ -53,6 +53,7 @@ class WidgetShell {
     /* ─ Wire listeners & anon‑ID ─ */
     this.initFileInput();
     this.anonId = this.getAnonId();
+    console.log('Initialized anonId:', this.anonId);
   }
 
  /* 1.1 FileInput → drag-drop & picker */
@@ -114,12 +115,19 @@ initFileInput() {
 
   /* 1.2 Persistent anon ID for credit logic */
   getAnonId() {
-    let id = localStorage.getItem('wf_anon_id');
-    if (!id) {
-      id = 'anon_' + Math.random().toString(36).slice(2, 11);
-      localStorage.setItem('wf_anon_id', id);
+    try {
+      let id = localStorage.getItem('wf_anon_id');
+      if (!id) {
+        id = 'anon_' + Math.random().toString(36).slice(2, 11);
+        localStorage.setItem('wf_anon_id', id);
+      }
+      console.log('getAnonId returning:', id);
+      return id;
+    } catch (e) {
+      console.error('localStorage error:', e);
+      // Fallback if localStorage is not available
+      return 'anon_' + Math.random().toString(36).slice(2, 11);
     }
-    return id;
   }
 
   /* 2 · Main flow — presign → upload → process */
@@ -137,6 +145,12 @@ initFileInput() {
         console.log('Widget ID:', this.widgetSlug);
         console.log('File:', file.name, file.type, file.size);
         
+        // Ensure anonId is set
+        if (!this.anonId) {
+          console.error('anonId is not set, regenerating...');
+          this.anonId = this.getAnonId();
+        }
+        
         const requestBody = {
           anon_id: this.anonId,
           widget_id: this.widgetSlug,
@@ -146,6 +160,11 @@ initFileInput() {
         console.log('Request body:', JSON.stringify(requestBody));
         console.log('anonId value:', this.anonId);
         console.log('widgetSlug value:', this.widgetSlug);
+        
+        if (!requestBody.anon_id || !requestBody.widget_id) {
+          console.error('Critical: Missing required fields before request', requestBody);
+          throw new Error('Missing required fields: anon_id or widget_id');
+        }
         
         const pre = await fetch(this.presignEndpoint, {
           method: 'POST',

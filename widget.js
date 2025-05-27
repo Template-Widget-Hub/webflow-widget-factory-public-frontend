@@ -54,7 +54,20 @@ class WidgetShell {
     if (!this.fileInput) return;
 
     const dropzone = this.fileInput.querySelector('.dropzone');
-    const input    = this.fileInput.querySelector('input[type="file"]');
+    let input = this.fileInput.querySelector('input[type="file"]');
+
+    // CMS pages: Webflow strips raw <input>; create one on the fly
+    if (!input) {
+      console.log('No file input found - creating one dynamically for CMS compatibility');
+      input = document.createElement('input');
+      input.type = 'file';
+      input.multiple = true;          // accepts ANY file type
+      input.className = 'wf-file-input';
+      dropzone.appendChild(input);
+    }
+
+    // Ensure overlay positioning if user removed the default CSS
+    dropzone.style.position = dropzone.style.position || 'relative';
 
     /* Highlight on drag */
     ['dragenter', 'dragover'].forEach(evt =>

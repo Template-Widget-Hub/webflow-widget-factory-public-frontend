@@ -81,6 +81,15 @@
   z-index: 1;
 }
 
+/* Webflow-specific file input class for better compatibility */
+.wf-file-input {
+  position: absolute;
+  inset: 0;              /* full-size overlay */
+  opacity: 0;            /* invisible but clickable */
+  cursor: pointer;
+  z-index: 2;            /* above dropzone content */
+}
+
 /* ProgressBar styles */
 [data-component="ProgressBar"] {
   width: 100%;

@@ -75,11 +75,7 @@ class WidgetShell {
     input.addEventListener('change', () => this.handleFiles(input.files));
     dropzone.addEventListener('click', (e) => {
       e.preventDefault();
-      /* Webflow marks file inputs display:none; briefly reveal then hide again */
-      const prev = input.style.display;
-      input.style.display = 'block';
       input.click();
-      input.style.display = prev || 'none';
     });
   }
 
@@ -169,14 +165,20 @@ class WidgetShell {
   /* 3 · Progress helpers */
   showProgress() {
     if (!this.progressBar) return;
-    const bar = this.progressBar.querySelector('.progress-fill');
+    // Support both .progress-bar and .progress-fill for compatibility
+    const bar = this.progressBar.querySelector('.progress-fill') || 
+                this.progressBar.querySelector('.progress-bar');
+    if (!bar) return;
     this.progressBar.hidden = false;
     bar.style.width = '0%';
     bar.classList.add('waiting');
   }
   hideProgress() {
     if (!this.progressBar) return;
-    const bar = this.progressBar.querySelector('.progress-fill');
+    // Support both .progress-bar and .progress-fill for compatibility
+    const bar = this.progressBar.querySelector('.progress-fill') || 
+                this.progressBar.querySelector('.progress-bar');
+    if (!bar) return;
     bar.classList.remove('waiting');
     this.progressBar.hidden = true;
   }

@@ -60,7 +60,7 @@
   padding: var(--wf-widget-spacing-lg);
   text-align: center;
   transition: all var(--wf-widget-transition);
-  position: relative;
+  position: relative;  /* Important: creates positioning context for absolute file input */
   background-color: var(--wf-widget-gray-light);
 }
 
@@ -84,10 +84,13 @@
 /* Webflow-specific file input class for better compatibility */
 .wf-file-input {
   position: absolute;
-  inset: 0;              /* full-size overlay */
-  opacity: 0;            /* invisible but clickable */
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  opacity: 0;
   cursor: pointer;
-  z-index: 2;            /* above dropzone content */
+  z-index: 2;
+  pointer-events: auto !important;  /* Force clickability even if parent has pointer-events: none */
 }
 
 /* ProgressBar styles */

@@ -144,6 +144,8 @@ initFileInput() {
           size:    file.size
         };
         console.log('Request body:', JSON.stringify(requestBody));
+        console.log('anonId value:', this.anonId);
+        console.log('widgetSlug value:', this.widgetSlug);
         
         const pre = await fetch(this.presignEndpoint, {
           method: 'POST',

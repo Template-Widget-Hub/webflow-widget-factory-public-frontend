@@ -3,6 +3,11 @@
    Naming aligned with widgets.css & Webflow DOM
    --------------------------------------------- */
 
+// Version identifier
+const WIDGET_VERSION = '2.0.5-f8a10f5b';
+window.WIDGET_FACTORY_VERSION = WIDGET_VERSION;
+console.log(`🚀 Widget Factory v${WIDGET_VERSION} loading...`);
+
 /* 0 · Runtime guard (avoid double‑loading) */
 if (window.WidgetFactoryLoaded) {
   console.warn('Widget Factory already loaded — skipping init');

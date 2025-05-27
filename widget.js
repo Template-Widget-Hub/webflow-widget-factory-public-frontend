@@ -62,7 +62,10 @@ class WidgetShell {
     });
 
     input.addEventListener('change', () => this.handleFiles(input.files));
-    dropzone.addEventListener('click', () => input.click());
+    dropzone.addEventListener('click', (e) => {
+      e.preventDefault();
+      input.click();
+    });
   }
 
   /* 1.2 Persistent anon ID for credit logic */
@@ -88,16 +91,20 @@ class WidgetShell {
         /* 2.1 Get presigned URL */
         console.log('Presign endpoint:', this.presignEndpoint);
         console.log('Widget ID:', this.widgetSlug);
+        console.log('File:', file.name, file.type, file.size);
+        
+        const requestBody = {
+          anon_id: this.anonId,
+          widget_id: this.widgetSlug,
+          mime:    file.type,
+          size:    file.size
+        };
+        console.log('Request body:', JSON.stringify(requestBody));
         
         const pre = await fetch(this.presignEndpoint, {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({
-            anon_id: this.anonId,
-            widget_id: this.widgetSlug,
-            mime:    file.type,
-            size:    file.size
-          })
+          body: JSON.stringify(requestBody)
         });
         
         if (!pre.ok) {

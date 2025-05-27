@@ -1,0 +1,208 @@
+/**
+ * Widget Factory - Core Styles
+ * 
+ * This CSS file provides styling for the widget components that can be
+ * easily imported into Webflow or used in local development.
+ */
+
+/* CSS Variables for theming - can be overridden at the component level */
+:root {
+  --wf-widget-primary: #4285f4;
+  --wf-widget-primary-light: #a5c7fe;
+  --wf-widget-primary-dark: #1a56c9;
+  --wf-widget-gray-light: #f5f5f5;
+  --wf-widget-gray-medium: #e0e0e0;
+  --wf-widget-gray-dark: #757575;
+  --wf-widget-text: #212121;
+  --wf-widget-error: #f44336;
+  --wf-widget-success: #4caf50;
+  --wf-widget-warning: #ff9800;
+  --wf-widget-border-radius: 6px;
+  --wf-widget-spacing-xs: 4px;
+  --wf-widget-spacing-sm: 8px;
+  --wf-widget-spacing-md: 16px;
+  --wf-widget-spacing-lg: 24px;
+  --wf-widget-spacing-xl: 32px;
+  --wf-widget-transition: 0.2s ease;
+}
+
+/* Apply theme color from data-theme-hue if provided */
+[data-theme-hue] {
+  --wf-widget-primary: hsl(var(--theme-hue, 210), 80%, 50%);
+  --wf-widget-primary-light: hsl(var(--theme-hue, 210), 80%, 80%);
+  --wf-widget-primary-dark: hsl(var(--theme-hue, 210), 80%, 40%);
+}
+
+/* WidgetShell styles */
+[data-component="WidgetShell"] {
+  display: flex;
+  flex-direction: column;
+  gap: var(--wf-widget-spacing-lg);
+  font-family: inherit;
+  color: var(--wf-widget-text);
+  max-width: 100%;
+  width: 100%;
+}
+
+/* FileInput styles */
+[data-component="FileInput"] {
+  width: 100%;
+}
+
+.dropzone {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  min-height: 160px;
+  border: 2px dashed var(--wf-widget-gray-medium);
+  border-radius: var(--wf-widget-border-radius);
+  padding: var(--wf-widget-spacing-lg);
+  text-align: center;
+  transition: all var(--wf-widget-transition);
+  position: relative;
+  background-color: var(--wf-widget-gray-light);
+}
+
+.dropzone:hover, 
+.dropzone.dragover {
+  border-color: var(--wf-widget-primary);
+  background-color: rgba(var(--wf-widget-primary-rgb, 66, 133, 244), 0.05);
+}
+
+.dropzone input[type="file"] {
+  position: absolute;
+  width: 100%;
+  height: 100%;
+  opacity: 0;
+  cursor: pointer;
+  top: 0;
+  left: 0;
+  z-index: 1;
+}
+
+/* ProgressBar styles */
+[data-component="ProgressBar"] {
+  width: 100%;
+}
+
+.progress-wrapper {
+  width: 100%;
+  height: 8px;
+  background-color: var(--wf-widget-gray-light);
+  border-radius: 4px;
+  overflow: hidden;
+}
+
+.progress-bar {
+  height: 100%;
+  width: 0%;
+  background-color: var(--wf-widget-primary);
+  transition: width 0.3s ease;
+}
+
+.progress-bar.waiting {
+  animation: progress-pulse 1.5s infinite;
+}
+
+.progress-bar.error {
+  background-color: var(--wf-widget-error);
+}
+
+@keyframes progress-pulse {
+  0% { opacity: 0.6; }
+  50% { opacity: 1; }
+  100% { opacity: 0.6; }
+}
+
+/* ResultCard styles */
+[data-component="ResultCard"] {
+  display: none;
+  padding: var(--wf-widget-spacing-lg);
+  border-radius: var(--wf-widget-border-radius);
+  background-color: white;
+  border: 1px solid var(--wf-widget-gray-medium);
+  width: 100%;
+}
+
+[data-result="headline"] {
+  margin-top: 0;
+  margin-bottom: var(--wf-widget-spacing-md);
+  font-weight: 600;
+}
+
+[data-result="text"] {
+  white-space: pre-wrap;
+  background-color: var(--wf-widget-gray-light);
+  padding: var(--wf-widget-spacing-md);
+  border-radius: var(--wf-widget-border-radius);
+  max-height: 300px;
+  overflow-y: auto;
+  font-family: monospace;
+  font-size: 14px;
+  line-height: 1.5;
+}
+
+[data-result="single-link"] {
+  display: inline-block;
+  margin-top: var(--wf-widget-spacing-md);
+  padding: var(--wf-widget-spacing-sm) var(--wf-widget-spacing-md);
+  background-color: var(--wf-widget-primary);
+  color: white;
+  text-decoration: none;
+  border-radius: var(--wf-widget-border-radius);
+  font-weight: 500;
+  transition: background-color var(--wf-widget-transition);
+}
+
+[data-result="single-link"]:hover {
+  background-color: var(--wf-widget-primary-dark);
+}
+
+[data-result="link-list"] {
+  list-style: none;
+  padding: 0;
+  margin: var(--wf-widget-spacing-md) 0 0 0;
+}
+
+[data-result="link-list"] li {
+  margin-bottom: var(--wf-widget-spacing-sm);
+}
+
+[data-result="link-list"] a {
+  display: inline-block;
+  padding: var(--wf-widget-spacing-sm) var(--wf-widget-spacing-md);
+  background-color: var(--wf-widget-primary);
+  color: white;
+  text-decoration: none;
+  border-radius: var(--wf-widget-border-radius);
+  font-weight: 500;
+  transition: background-color var(--wf-widget-transition);
+}
+
+[data-result="link-list"] a:hover {
+  background-color: var(--wf-widget-primary-dark);
+}
+
+/* Webflow-specific overrides and utilities */
+.w-webflow-badge {
+  display: none !important;
+}
+
+/* Responsive adjustments */
+@media (max-width: 767px) {
+  .dropzone {
+    min-height: 120px;
+    padding: var(--wf-widget-spacing-md);
+  }
+}
+
+/* Animation utilities */
+.wf-widget-fade-in {
+  animation: fade-in 0.3s ease forwards;
+}
+
+@keyframes fade-in {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}

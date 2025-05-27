@@ -17,6 +17,15 @@ class WidgetShell {
     this.rootEl          = rootEl;                        // <section data-widget="merge-pdf" …>
     this.widgetSlug      = rootEl.dataset.widget;          // "merge-pdf"
     
+    // Check if widget ID is set
+    if (!this.widgetSlug) {
+      console.error('Widget Error: No data-widget attribute found on element:', rootEl);
+      console.error('Add data-widget="merge-pdf" to your widget element');
+      return;
+    }
+    
+    console.log('Initializing widget:', this.widgetSlug);
+    
     // Default Supabase endpoints - update these with your project URL
     const SUPABASE_URL = 'https://yailbankhodrzsdmxxda.supabase.co';
     const N8N_WEBHOOK_URL = 'https://n8n.template-hub.com/webhook/process'; // Update with your n8n URL

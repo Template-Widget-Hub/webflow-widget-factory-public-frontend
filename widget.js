@@ -16,8 +16,17 @@ class WidgetShell {
     /* ─ Dataset hooks ─ */
     this.rootEl          = rootEl;                        // <section data-widget="merge-pdf" …>
     this.widgetSlug      = rootEl.dataset.widget;          // "merge-pdf"
-    this.presignEndpoint = rootEl.dataset.presignEndpoint || opts.presignEndpoint;
-    this.processEndpoint = rootEl.dataset.processEndpoint || opts.processEndpoint;
+    
+    // Default Supabase endpoints - update these with your project URL
+    const SUPABASE_URL = 'https://yailbankhodrzsdmxxda.supabase.co';
+    const N8N_WEBHOOK_URL = 'https://n8n.template-hub.com/webhook/process'; // Update with your n8n URL
+    
+    this.presignEndpoint = rootEl.dataset.presignEndpoint || 
+                          opts.presignEndpoint || 
+                          `${SUPABASE_URL}/functions/v1/presign`;
+    this.processEndpoint = rootEl.dataset.processEndpoint || 
+                          opts.processEndpoint || 
+                          N8N_WEBHOOK_URL;
 
     /* ─ Child components (data-component) ─ */
     this.fileInput   = rootEl.querySelector('[data-component="FileInput"]');
@@ -82,7 +91,7 @@ class WidgetShell {
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({
             anon_id: this.anonId,
-            widget:  this.widgetSlug,
+            widget_id: this.widgetSlug,
             mime:    file.type,
             size:    file.size
           })
@@ -111,8 +120,8 @@ class WidgetShell {
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
           anon_id: this.anonId,
-          widget:  this.widgetSlug,
-          files:   fileKeys.map(k => ({ bucket: 'widget-uploads', key: k }))
+          widget_id: this.widgetSlug,
+          file_keys: fileKeys
         })
       });
       if (!proc.ok) throw new Error('Processing failed');

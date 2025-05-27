@@ -15,12 +15,14 @@ class WidgetShell {
   constructor(rootEl, opts = {}) {
     /* ─ Dataset hooks ─ */
     this.rootEl          = rootEl;                        // <section data-widget="merge-pdf" …>
-    this.widgetSlug      = rootEl.dataset.widget;          // "merge-pdf"
+    this.widgetSlug      = rootEl.dataset.widget ||        // "merge-pdf" (preferred)
+                          rootEl.dataset.widgetId ||       // fallback to data-widget-id
+                          '';
     
     // Check if widget ID is set
     if (!this.widgetSlug) {
-      console.error('Widget Error: No data-widget attribute found on element:', rootEl);
-      console.error('Add data-widget="merge-pdf" to your widget element');
+      console.error('Widget Error: No data-widget or data-widget-id attribute found on element:', rootEl);
+      console.error('Add data-widget="mp3-to-text" or data-widget-id="mp3-to-text" to your widget element');
       return;
     }
     

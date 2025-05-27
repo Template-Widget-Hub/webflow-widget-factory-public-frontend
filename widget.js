@@ -55,59 +55,53 @@ class WidgetShell {
     this.anonId = this.getAnonId();
   }
 
-  /* 1.1 FileInput → drag-drop & picker */
-  initFileInput() {
-    // bail if the wrapper itself is missing
-    if (!this.fileInput) return;
+ /* 1.1 FileInput → drag-drop & picker */
+initFileInput() {
+  if (!this.fileInput) return;
 
-    const dropzone = this.fileInput.querySelector('.dropzone');
-    if (!dropzone) return;                     // safety guard
+  const dropzone = this.fileInput.querySelector('.dropzone');
+  if (!dropzone) return;
 
-    // try to grab a file-input that survived publish
-    let input = this.fileInput.querySelector('input[type="file"]');
+  /* ① Caption → “Drag Files Here” */
+  const label = dropzone.querySelector('.u-drop-label');
+  if (label) label.textContent = 'Drag Files Here';
 
-    // ── CMS templates: Webflow strips raw <input>; create one on the fly
-    if (!input) {
-      console.log('No file input found - creating one dynamically for CMS compatibility');
-      input = document.createElement('input');
-      input.type      = 'file';
-      input.multiple  = true;                  // accepts ANY file type
-      input.className = 'wf-file-input';       // overlay class (see CSS)
-      input.style.cssText = `
-        position:absolute;
-        inset:0;
-        width:100%;
-        height:100%;
-        opacity:0;
-        cursor:pointer;
-        z-index:2;
-        pointer-events:auto;
-      `;
-      dropzone.appendChild(input);
-    }
-
-    // Ensure overlay positioning if user removed the default CSS
-    dropzone.style.position = dropzone.style.position || 'relative';
-
-    /* Highlight on drag */
-    ['dragenter', 'dragover'].forEach(evt =>
-      dropzone.addEventListener(evt, e => {
-        e.preventDefault();
-        dropzone.classList.add('dragover');
-      })
-    );
-    ['dragleave', 'drop'].forEach(evt =>
-      dropzone.addEventListener(evt, () => dropzone.classList.remove('dragover'))
-    );
-
-    dropzone.addEventListener('drop', e => {
-      e.preventDefault();
-      this.handleFiles(e.dataTransfer.files);
-    });
-
-    input.addEventListener('change', () => this.handleFiles(input.files));
-    // No need for dropzone click handler - the input overlay handles clicks directly
+  /* ② Create or reuse invisible <input> overlay */
+  let input = this.fileInput.querySelector('input[type="file"]');
+  if (!input) {
+    input = document.createElement('input');
+    input.type      = 'file';
+    input.multiple  = true;
+    dropzone.appendChild(input);
   }
+  Object.assign(input.style, {
+    position:'absolute', inset:'0', width:'100%', height:'100%',
+    opacity:'0', cursor:'pointer', zIndex:'2', pointerEvents:'auto'
+  });
+  dropzone.style.position ||= 'relative';
+
++ /* ③ Hide any fallback browser text (e.g. “No file chosen”) */
++ input.setAttribute('title', '');               // no tooltip
++ input.addEventListener('click', e => e.stopPropagation());
+
+  /* ④ Drag-hover highlight */
+  ['dragenter','dragover'].forEach(evt =>
+    dropzone.addEventListener(evt, e => {
+      e.preventDefault();
+      dropzone.classList.add('dragover');
+    })
+  );
+  ['dragleave','drop'].forEach(evt =>
+    dropzone.addEventListener(evt, () => dropzone.classList.remove('dragover'))
+  );
+
+  /* ⑤ Drop & picker handlers */
+  dropzone.addEventListener('drop', e => {
+    e.preventDefault();
+    this.handleFiles(e.dataTransfer.files);
+  });
+  input.addEventListener('change', () => this.handleFiles(input.files));
+}
 
   /* 1.2 Persistent anon ID for credit logic */
   getAnonId() {
@@ -192,26 +186,22 @@ class WidgetShell {
     }
   }
 
-  /* 3 · Progress helpers */
-  showProgress() {
-    if (!this.progressBar) return;
-    // Support both .progress-bar and .progress-fill for compatibility
-    const bar = this.progressBar.querySelector('.progress-fill') || 
-                this.progressBar.querySelector('.progress-bar');
-    if (!bar) return;
-    this.progressBar.hidden = false;
-    bar.style.width = '0%';
-    bar.classList.add('waiting');
-  }
-  hideProgress() {
-    if (!this.progressBar) return;
-    // Support both .progress-bar and .progress-fill for compatibility
-    const bar = this.progressBar.querySelector('.progress-fill') || 
-                this.progressBar.querySelector('.progress-bar');
-    if (!bar) return;
-    bar.classList.remove('waiting');
-    this.progressBar.hidden = true;
-  }
+showProgress() {
+  if (!this.progressBar) return;
+  const bar = this.progressBar.querySelector('.progress-fill, .progress-bar');
+  if (!bar) return;
+  this.progressBar.hidden = false;
+  bar.style.width = '0%';
+  bar.classList.add('waiting');
+}
+hideProgress() {
+  if (!this.progressBar) return;
+  const bar = this.progressBar.querySelector('.progress-fill, .progress-bar');
+  if (!bar) return;
+  bar.classList.remove('waiting');
+  bar.style.width = '100%';          /* snap to full when done */
+  this.progressBar.hidden = true;
+}
 
   /* 4 · Result helpers */
   resetResult() {

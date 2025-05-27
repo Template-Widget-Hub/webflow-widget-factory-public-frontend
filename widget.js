@@ -44,25 +44,35 @@ class WidgetShell {
     this.progressBar = rootEl.querySelector('[data-component="ProgressBar"]');
     this.resultCard  = rootEl.querySelector('[data-component="ResultCard"]');
 
+    console.log('Widget components found:', {
+      fileInput: !!this.fileInput,
+      progressBar: !!this.progressBar,
+      resultCard: !!this.resultCard
+    });
+
     /* ─ Wire listeners & anon‑ID ─ */
     this.initFileInput();
     this.anonId = this.getAnonId();
   }
 
-  /* 1.1 FileInput → drag‑drop & picker */
+  /* 1.1 FileInput → drag-drop & picker */
   initFileInput() {
+    // bail if the wrapper itself is missing
     if (!this.fileInput) return;
 
     const dropzone = this.fileInput.querySelector('.dropzone');
+    if (!dropzone) return;                     // safety guard
+
+    // try to grab a file-input that survived publish
     let input = this.fileInput.querySelector('input[type="file"]');
 
-    // CMS pages: Webflow strips raw <input>; create one on the fly
+    // ── CMS templates: Webflow strips raw <input>; create one on the fly
     if (!input) {
       console.log('No file input found - creating one dynamically for CMS compatibility');
       input = document.createElement('input');
-      input.type = 'file';
-      input.multiple = true;          // accepts ANY file type
-      input.className = 'wf-file-input';
+      input.type      = 'file';
+      input.multiple  = true;                  // accepts ANY file type
+      input.className = 'wf-file-input';       // overlay class (see CSS)
       dropzone.appendChild(input);
     }
 

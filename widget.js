@@ -63,8 +63,17 @@ initFileInput() {
   if (!dropzone) return;
 
   /* ① Caption → “Drag Files Here” */
-  const label = dropzone.querySelector('.u-drop-label');
-  if (label) label.textContent = 'Drag Files Here';
+  let label = dropzone.querySelector('.u-drop-label');
+  if (!label) {
+    // Create label if it doesn't exist
+    label = document.createElement('div');
+    label.className = 'u-drop-label';
+    label.textContent = 'Drag your file(s) here!';
+    label.style.cssText = 'pointer-events: none; user-select: none;';
+    dropzone.appendChild(label);
+  } else {
+    label.textContent = 'Drag your file(s) here!';
+  }
 
   /* ② Create or reuse invisible <input> overlay */
   let input = this.fileInput.querySelector('input[type="file"]');

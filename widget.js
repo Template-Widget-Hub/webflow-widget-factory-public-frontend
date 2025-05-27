@@ -212,4 +212,75 @@ document.addEventListener('DOMContentLoaded', () => {
   document.querySelectorAll('[data-widget]').forEach(el => new WidgetShell(el));
 });
 
+/* 6 · Core dropzone styles (injected if not already in CSS) */
+const dropzoneStyles = `
+  /* Core dropzone visuals (if not yet in widgets.css) */
+  .dropzone {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 0.5rem;
+    padding: 2rem;
+    border: 2px dashed var(--wf-border, #ccc);
+    border-radius: 8px;
+    background: var(--wf-bg-light, rgba(0,0,0,.02));
+    transition: border-color .2s, background .2s;
+    cursor: pointer;
+    user-select: none;
+  }
+
+  .dropzone.dragover {
+    border-color: var(--wf-primary, #4285f4);
+    background: rgba(66,133,244,.06);
+  }
+
+  /* Icon defaults */
+  .dropzone .u-drop-icon {
+    width: 48px;
+    height: 48px;
+    pointer-events: none;      /* clicks pass through */
+  }
+
+  /* Label */
+  .dropzone .u-drop-label {
+    margin: 0;
+    font-size: 16px;
+    color: #666;
+    text-align: center;
+    pointer-events: none;
+  }
+
+  /* Hide icon + label once a file is chosen */
+  .dropzone.success .u-drop-icon,
+  .dropzone.success .u-drop-label {
+    display: none;
+  }
+
+  /* Limit any <img> or <svg> inside .dropzone */
+  .dropzone img,
+  .dropzone svg {
+    width: 48px;
+    height: 48px;
+    margin: 0 auto 0.5rem;
+    pointer-events: none;
+  }
+
+  /* Style any text block directly inside .dropzone */
+  .dropzone > *:last-child {
+    margin-top: 0.5rem;
+    font-size: 16px;
+    color: #666;
+    text-align: center;
+  }
+`;
+
+/* Inject styles if not already present */
+if (!document.getElementById('widget-dropzone-styles')) {
+  const styleEl = document.createElement('style');
+  styleEl.id = 'widget-dropzone-styles';
+  styleEl.textContent = dropzoneStyles;
+  document.head.appendChild(styleEl);
+}
+
 export default WidgetShell;

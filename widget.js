@@ -73,6 +73,16 @@ class WidgetShell {
       input.type      = 'file';
       input.multiple  = true;                  // accepts ANY file type
       input.className = 'wf-file-input';       // overlay class (see CSS)
+      input.style.cssText = `
+        position:absolute;
+        inset:0;
+        width:100%;
+        height:100%;
+        opacity:0;
+        cursor:pointer;
+        z-index:2;
+        pointer-events:auto;
+      `;
       dropzone.appendChild(input);
     }
 
@@ -96,10 +106,7 @@ class WidgetShell {
     });
 
     input.addEventListener('change', () => this.handleFiles(input.files));
-    dropzone.addEventListener('click', (e) => {
-      e.preventDefault();
-      input.click();
-    });
+    // No need for dropzone click handler - the input overlay handles clicks directly
   }
 
   /* 1.2 Persistent anon ID for credit logic */

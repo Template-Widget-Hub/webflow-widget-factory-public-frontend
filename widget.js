@@ -86,6 +86,9 @@ class WidgetShell {
     for (const file of files) {
       try {
         /* 2.1 Get presigned URL */
+        console.log('Presign endpoint:', this.presignEndpoint);
+        console.log('Widget ID:', this.widgetSlug);
+        
         const pre = await fetch(this.presignEndpoint, {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
@@ -96,7 +99,12 @@ class WidgetShell {
             size:    file.size
           })
         });
-        if (!pre.ok) throw new Error('Presign failed');
+        
+        if (!pre.ok) {
+          const errorText = await pre.text();
+          console.error('Presign response:', pre.status, errorText);
+          throw new Error(`Presign failed: ${pre.status} ${errorText}`);
+        }
         const { uploadUrl, key } = await pre.json();
 
         /* 2.2 Upload */

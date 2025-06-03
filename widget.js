@@ -4,7 +4,7 @@
    --------------------------------------------- */
 
 // Version identifier
-const WIDGET_VERSION = '2.0.5-f8a10f5b';
+const WIDGET_VERSION = '2.0.5-0456fcf2';
 window.WIDGET_FACTORY_VERSION = WIDGET_VERSION;
 console.log(`🚀 Widget Factory v${WIDGET_VERSION} loading...`);
 
@@ -67,6 +67,9 @@ class WidgetShell {
     this.initFileInput();
     this.anonId = this.getAnonId();
     console.log('Initialized anonId:', this.anonId);
+    
+    // Check and display user credits
+    this.checkUserCredits();
   }
 
  /* 1.1 FileInput → drag-drop & picker */
@@ -141,6 +144,35 @@ initFileInput() {
       // Fallback if localStorage is not available
       return 'anon_' + Math.random().toString(36).slice(2, 11);
     }
+  }
+
+  /* 1.3 Check user credits */
+  async checkUserCredits() {
+    try {
+      const SUPABASE_URL = 'https://yailbankhodrzsdmxxda.supabase.co';
+      const ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InlhaWxiYW5raG9kcnpzZG14eGRhIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NDY3NDYzMTYsImV4cCI6MjA2MjMyMjMxNn0.v_-5Xzs6lLU1L1UunDu4LAJj8yFlRID9mN65iGk0fig';
+      
+      const response = await fetch(`${SUPABASE_URL}/rest/v1/user_credits?user_id=eq.${this.anonId}&select=balance`, {
+        headers: {
+          'Authorization': `Bearer ${ANON_KEY}`,
+          'apikey': ANON_KEY
+        }
+      });
+      
+      if (response.ok) {
+        const data = await response.json();
+        if (data && data[0]) {
+          console.log(`💳 User Credits: ${data[0].balance} (User: ${this.anonId})`);
+          return data[0].balance;
+        } else {
+          console.log(`💳 User Credits: 0 (User not found: ${this.anonId})`);
+          return 0;
+        }
+      }
+    } catch (error) {
+      console.error('Error checking credits:', error);
+    }
+    return null;
   }
 
   /* 2 · Main flow — presign → upload → process */
@@ -422,5 +454,42 @@ if (document.readyState === 'loading') {
 
 // Also expose for manual init
 window.WidgetShell = WidgetShell;
+
+// Global function to check credits
+window.checkMyCredits = async function() {
+  const anonId = localStorage.getItem('wf_anon_id');
+  if (!anonId) {
+    console.log('No user ID found. Upload a file first to create one.');
+    return;
+  }
+  
+  const SUPABASE_URL = 'https://yailbankhodrzsdmxxda.supabase.co';
+  const ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InlhaWxiYW5raG9kcnpzZG14eGRhIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NDY3NDYzMTYsImV4cCI6MjA2MjMyMjMxNn0.v_-5Xzs6lLU1L1UunDu4LAJj8yFlRID9mN65iGk0fig';
+  
+  try {
+    const response = await fetch(`${SUPABASE_URL}/rest/v1/user_credits?user_id=eq.${anonId}&select=balance`, {
+      headers: {
+        'Authorization': `Bearer ${ANON_KEY}`,
+        'apikey': ANON_KEY
+      }
+    });
+    
+    if (response.ok) {
+      const data = await response.json();
+      if (data && data[0]) {
+        console.log(`💳 Credit Balance: ${data[0].balance}`);
+        console.log(`👤 User ID: ${anonId}`);
+        return data[0].balance;
+      } else {
+        console.log(`💳 No credits found for user: ${anonId}`);
+        return 0;
+      }
+    }
+  } catch (error) {
+    console.error('Error checking credits:', error);
+  }
+};
+
+console.log('💡 Tip: Run checkMyCredits() in console to see your credit balance');
 
 export default WidgetShell;

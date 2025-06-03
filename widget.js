@@ -4,7 +4,7 @@
    --------------------------------------------- */
 
 // Version identifier
-const WIDGET_VERSION = '2.0.5-8a9ec509';
+const WIDGET_VERSION = '2.0.5-85de8a04';
 window.WIDGET_FACTORY_VERSION = WIDGET_VERSION;
 console.log(`🚀 Widget Factory v${WIDGET_VERSION} loading...`);
 console.log(`📌 Version: ${WIDGET_VERSION}`);
@@ -33,6 +33,7 @@ class WidgetShell {
     }
     
     console.log('Initializing widget:', this.widgetSlug);
+    console.log('👤 Anonymous User ID:', this.getAnonId());
     
     try {
       // Default Supabase endpoints - update these with your project URL
@@ -67,7 +68,7 @@ class WidgetShell {
     /* ─ Wire listeners & anon‑ID ─ */
     this.initFileInput();
     this.anonId = this.getAnonId();
-    console.log('Initialized anonId:', this.anonId);
+    console.log('👤 Initialized User ID:', this.anonId);
     
     // Check and display user credits
     this.checkUserCredits();
@@ -138,7 +139,7 @@ initFileInput() {
         id = 'anon_' + Math.random().toString(36).slice(2, 11);
         localStorage.setItem('wf_anon_id', id);
       }
-      console.log('getAnonId returning:', id);
+      console.log('👤 Retrieved User ID from localStorage:', id);
       return id;
     } catch (e) {
       console.error('localStorage error:', e);
@@ -493,7 +494,14 @@ window.checkMyCredits = async function() {
   }
 };
 
-console.log('💡 Tip: Run checkMyCredits() in console to see your credit balance');
-console.log(`📌 Widget Version: ${WIDGET_VERSION}`);
+// Startup summary
+setTimeout(() => {
+  const anonId = localStorage.getItem('wf_anon_id');
+  console.log('=== Widget Factory Ready ===');
+  console.log(`📌 Version: ${WIDGET_VERSION}`);
+  console.log(`👤 Your User ID: ${anonId || 'Not set yet'}`);
+  console.log('💡 Run checkMyCredits() to see your balance');
+  console.log('===========================');
+}, 100);
 
 export default WidgetShell;

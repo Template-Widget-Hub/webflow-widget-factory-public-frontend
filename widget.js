@@ -4,7 +4,7 @@
    --------------------------------------------- */
 
 // Version identifier
-const WIDGET_VERSION = '2.0.5-a83bf749';
+const WIDGET_VERSION = '2.0.5-7b15ce49';
 window.WIDGET_FACTORY_VERSION = WIDGET_VERSION;
 console.log(`🚀 Widget Factory v${WIDGET_VERSION} loading...`);
 console.log(`📌 Version: ${WIDGET_VERSION}`);
@@ -38,16 +38,13 @@ class WidgetShell {
     try {
       // Default Supabase endpoints - update these with your project URL
       const SUPABASE_URL = 'https://yailbankhodrzsdmxxda.supabase.co';
-      const N8N_WEBHOOK_URL = 'https://n8n.template-hub.com/webhook/process'; // Update with your n8n URL
       
       console.log('Setting endpoints...');
       this.presignEndpoint = rootEl.dataset.presignEndpoint || 
                             opts.presignEndpoint || 
                             `${SUPABASE_URL}/functions/v1/presign`;
-      this.processEndpoint = rootEl.dataset.processEndpoint || 
-                            opts.processEndpoint || 
-                            N8N_WEBHOOK_URL;
-      console.log('Endpoints set:', { presignEndpoint: this.presignEndpoint, processEndpoint: this.processEndpoint });
+      // Process endpoint removed - storage trigger handles processing automatically
+      console.log('Endpoints set:', { presignEndpoint: this.presignEndpoint });
 
       /* ─ Child components (data-component) ─ */
       console.log('Finding child components...');
@@ -244,24 +241,24 @@ initFileInput() {
       }
     }
 
-    /* 2.3 Notify processor */
-    try {
-      const proc = await fetch(this.processEndpoint, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          anon_id: this.anonId,
-          widget_id: this.widgetSlug,
-          file_keys: fileKeys
-        })
-      });
-      if (!proc.ok) throw new Error('Processing failed');
-      const payload = await proc.json();
-      this.displayResult(payload);
-    } catch (err) {
-      console.error(err);
-      this.showError(err.message);
-    }
+    /* 2.3 Show upload success - Storage trigger handles processing automatically */
+    this.showUploadSuccess(fileKeys);
+    
+    // Optional: Monitor job progress (future enhancement)
+    // this.monitorJobProgress(fileKeys);
+  }
+
+  showUploadSuccess(fileKeys) {
+    this.hideProgress();
+    if (!this.resultCard) return;
+    
+    this.resultCard.dataset.kind = 'success';
+    this.resultCard.querySelector('[data-result="headline"]').textContent = 'Upload Complete';
+    this.resultCard.querySelector('[data-result="text"]').textContent = 'Processing will begin shortly...';
+    this.resultCard.hidden = false;
+    
+    console.log(`✅ Files uploaded successfully:`, fileKeys);
+    console.log(`📄 Storage trigger will automatically process ${fileKeys.length} file(s)`);
   }
 
 showProgress() {

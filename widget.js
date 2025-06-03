@@ -4,9 +4,10 @@
    --------------------------------------------- */
 
 // Version identifier
-const WIDGET_VERSION = '2.0.5-0456fcf2';
+const WIDGET_VERSION = '2.0.5-8a9ec509';
 window.WIDGET_FACTORY_VERSION = WIDGET_VERSION;
 console.log(`🚀 Widget Factory v${WIDGET_VERSION} loading...`);
+console.log(`📌 Version: ${WIDGET_VERSION}`);
 
 /* 0 · Runtime guard (avoid double‑loading) */
 if (window.WidgetFactoryLoaded) {
@@ -479,9 +480,11 @@ window.checkMyCredits = async function() {
       if (data && data[0]) {
         console.log(`💳 Credit Balance: ${data[0].balance}`);
         console.log(`👤 User ID: ${anonId}`);
+        console.log(`📌 Widget Version: ${window.WIDGET_FACTORY_VERSION || 'Unknown'}`);
         return data[0].balance;
       } else {
         console.log(`💳 No credits found for user: ${anonId}`);
+        console.log(`📌 Widget Version: ${window.WIDGET_FACTORY_VERSION || 'Unknown'}`);
         return 0;
       }
     }
@@ -491,5 +494,6 @@ window.checkMyCredits = async function() {
 };
 
 console.log('💡 Tip: Run checkMyCredits() in console to see your credit balance');
+console.log(`📌 Widget Version: ${WIDGET_VERSION}`);
 
 export default WidgetShell;

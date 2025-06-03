@@ -4,7 +4,7 @@
    --------------------------------------------- */
 
 // Version identifier
-const WIDGET_VERSION = '2.0.5-85de8a04';
+const WIDGET_VERSION = '2.0.5-a83bf749';
 window.WIDGET_FACTORY_VERSION = WIDGET_VERSION;
 console.log(`🚀 Widget Factory v${WIDGET_VERSION} loading...`);
 console.log(`📌 Version: ${WIDGET_VERSION}`);
@@ -202,7 +202,8 @@ initFileInput() {
           anon_id: this.anonId,
           widget_id: this.widgetSlug,
           mime:    file.type,
-          size:    file.size
+          size:    file.size,
+          fileName: file.name  // ✅ ADD THIS LINE - Include original filename
         };
         console.log('Request body:', JSON.stringify(requestBody));
         console.log('anonId value:', this.anonId);

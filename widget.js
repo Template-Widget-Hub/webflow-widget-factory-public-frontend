@@ -4,7 +4,7 @@
    --------------------------------------------- */
 
 // Version identifier
-const WIDGET_VERSION = '2.1.0-monitoring-8f3119bc';
+const WIDGET_VERSION = '2.1.0-monitoring-3bb92a96';
 window.WIDGET_FACTORY_VERSION = WIDGET_VERSION;
 console.log(`🚀 Widget Factory v${WIDGET_VERSION} loading...`);
 
@@ -362,7 +362,7 @@ class WidgetShell {
     
     // Set text
     const textEl = this.resultCard.querySelector('[data-result="text"]');
-    if (textEl) textContent = result.text || '';
+    if (textEl) textEl.textContent = result.text || '';
     
     // Handle download links
     if (result.downloadUrl) {

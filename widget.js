@@ -1,10 +1,10 @@
 /* ---------------------------------------------
-   widget-with-monitoring.js — Widget Factory with Job Monitoring
-   Enhanced version that polls for job results after upload
+   widget.js — Widget Factory Core
+   Handles file uploads, job monitoring, and result display
    --------------------------------------------- */
 
 // Version identifier
-const WIDGET_VERSION = '2.1.0-monitoring-3bb92a96';
+const WIDGET_VERSION = '2.2.0-948ae060';
 window.WIDGET_FACTORY_VERSION = WIDGET_VERSION;
 console.log(`🚀 Widget Factory v${WIDGET_VERSION} loading...`);
 
@@ -15,7 +15,7 @@ if (window.WidgetFactoryLoaded) {
   window.WidgetFactoryLoaded = true;
 }
 
-/* Enhanced WidgetShell with Job Monitoring */
+/* WidgetShell - Main widget controller class */
 class WidgetShell {
   constructor(rootEl, opts = {}) {
     /* ─ Dataset hooks ─ */

@@ -4,7 +4,7 @@
    --------------------------------------------- */
 
 // Version identifier
-const WIDGET_VERSION = '2.2.0-948ae060';
+const WIDGET_VERSION = '2.2.0-51282652';
 window.WIDGET_FACTORY_VERSION = WIDGET_VERSION;
 console.log(`🚀 Widget Factory v${WIDGET_VERSION} loading...`);
 
@@ -584,12 +584,18 @@ if (document.readyState === 'loading') {
 }
 
 function initAllWidgets() {
-  document.querySelectorAll('[data-widget], [data-widget-id]').forEach((el) => {
+  const widgets = document.querySelectorAll('[data-widget], [data-widget-id]');
+  widgets.forEach((el) => {
     const widget = new WidgetShell(el);
     // Store reference for cleanup if needed
     el._widgetInstance = widget;
   });
-  console.log(`✅ Widget Factory initialized (${document.querySelectorAll('[data-widget]').length} widgets)`);
+  console.log(`✅ Widget Factory initialized (${widgets.length} widgets)`);
+  
+  // Dispatch ready event for external scripts
+  window.dispatchEvent(new CustomEvent('widgetfactory:ready', {
+    detail: { widgetCount: widgets.length }
+  }));
 }
 
 // Export for use in other scripts

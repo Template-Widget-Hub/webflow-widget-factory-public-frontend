@@ -1,5 +1,5 @@
 /**
- * Widget Factory - Core Styles
+ * Widget Factory - Core Styles (FIXED VERSION)
  * 
  * This CSS file provides styling for the widget components that can be
  * easily imported into Webflow or used in local development.
@@ -40,8 +40,9 @@
   gap: var(--wf-widget-spacing-lg);
   font-family: inherit;
   color: var(--wf-widget-text);
-  max-width: 100%;
+  max-width: 600px; /* 🔧 FIXED: Add max-width for better centering */
   width: 100%;
+  margin: 0 auto; /* 🔧 FIXED: Center the entire widget */
 }
 
 /* FileInput styles */
@@ -93,54 +94,104 @@
   pointer-events: auto !important;  /* Force clickability even if parent has pointer-events: none */
 }
 
-/* ProgressBar styles */
+/* 🔧 FIXED: ProgressBar styles - Better visibility and centering */
 [data-component="ProgressBar"] {
   width: 100%;
+  max-width: 400px; /* Limit width for better appearance */
+  margin: var(--wf-widget-spacing-lg) auto; /* Center the progress bar */
+  display: none; /* Hidden by default */
 }
 
-.progress-wrapper {
+/* 🔧 FIXED: Show progress bar when needed */
+[data-component="ProgressBar"]:not([hidden]) {
+  display: block;
+}
+
+.progress-wrapper,
+.progress-container {
   width: 100%;
   height: 8px;
-  background-color: var(--wf-widget-gray-light);
+  background-color: var(--wf-widget-gray-medium);
   border-radius: 4px;
   overflow: hidden;
+  position: relative;
+  box-shadow: inset 0 1px 3px rgba(0,0,0,0.1); /* Add subtle depth */
 }
 
-.progress-bar {
+.progress-bar,
+.progress-fill {
   height: 100%;
   width: 0%;
-  background-color: var(--wf-widget-primary);
+  background: linear-gradient(90deg, #4F46E5, #7C3AED); /* Modern gradient */
   transition: width 0.3s ease;
+  border-radius: 4px;
 }
 
-.progress-bar.waiting {
-  animation: progress-pulse 1.5s infinite;
+.progress-bar.waiting,
+.progress-fill.waiting {
+  animation: progress-slide 2s linear infinite;
+  background: linear-gradient(90deg, #4F46E5, #7C3AED, #4F46E5);
+  background-size: 200% 100%;
 }
 
 .progress-bar.error {
   background-color: var(--wf-widget-error);
 }
 
+/* 🔧 FIXED: Progress animations */
 @keyframes progress-pulse {
   0% { opacity: 0.6; }
   50% { opacity: 1; }
   100% { opacity: 0.6; }
 }
 
-/* ResultCard styles */
+@keyframes progress-slide {
+  0% { background-position: 200% 0; }
+  100% { background-position: -200% 0; }
+}
+
+/* 🔧 FIXED: ResultCard styles - Better centering and appearance */
 [data-component="ResultCard"] {
   display: none;
-  padding: var(--wf-widget-spacing-lg);
-  border-radius: var(--wf-widget-border-radius);
+  padding: var(--wf-widget-spacing-xl);
+  border-radius: 12px; /* More modern radius */
   background-color: white;
   border: 1px solid var(--wf-widget-gray-medium);
   width: 100%;
+  max-width: 500px; /* Limit width for better readability */
+  margin: var(--wf-widget-spacing-lg) auto; /* Center the result card */
+  box-shadow: 0 4px 20px rgba(0,0,0,0.1); /* Add elevation */
+  text-align: center; /* Center all content */
 }
 
-[data-result="headline"] {
+/* 🔧 FIXED: Show result card when visible */
+[data-component="ResultCard"]:not([hidden]) {
+  display: block;
+}
+
+/* Result card states */
+[data-component="ResultCard"][data-kind="success"] {
+  border-color: var(--wf-widget-success);
+  background: linear-gradient(135deg, #ffffff 0%, #f8fff9 100%);
+}
+
+[data-component="ResultCard"][data-kind="error"] {
+  border-color: var(--wf-widget-error);
+  background: linear-gradient(135deg, #ffffff 0%, #fff8f8 100%);
+}
+
+[data-component="ResultCard"][data-kind="processing"] {
+  border-color: var(--wf-widget-warning);
+  background: linear-gradient(135deg, #ffffff 0%, #fffdf8 100%);
+}
+
+[data-result="headline"],
+[data-result="Headline"] {
   margin-top: 0;
   margin-bottom: var(--wf-widget-spacing-md);
   font-weight: 600;
+  font-size: 1.5rem;
+  color: var(--wf-widget-text);
 }
 
 [data-result="text"] {
@@ -153,32 +204,51 @@
   font-family: monospace;
   font-size: 14px;
   line-height: 1.5;
+  margin-bottom: var(--wf-widget-spacing-md);
 }
 
-[data-result="single-link"] {
+/* 🔧 FIXED: Download button styling */
+[data-result="single-link"],
+[data-result="download-url"] {
   display: inline-block;
-  margin-top: var(--wf-widget-spacing-md);
-  padding: var(--wf-widget-spacing-sm) var(--wf-widget-spacing-md);
-  background-color: var(--wf-widget-primary);
+  margin: var(--wf-widget-spacing-lg) auto var(--wf-widget-spacing-md) auto;
+  padding: 14px 28px;
+  background: linear-gradient(135deg, #4F46E5, #7C3AED);
   color: white;
   text-decoration: none;
-  border-radius: var(--wf-widget-border-radius);
-  font-weight: 500;
-  transition: background-color var(--wf-widget-transition);
+  border-radius: 8px;
+  font-weight: 600;
+  font-size: 16px;
+  transition: all var(--wf-widget-transition);
+  box-shadow: 0 2px 8px rgba(79, 70, 229, 0.3);
+  cursor: pointer;
+  border: none;
 }
 
-[data-result="single-link"]:hover {
-  background-color: var(--wf-widget-primary-dark);
+[data-result="single-link"]:hover,
+[data-result="download-url"]:hover {
+  transform: translateY(-1px);
+  box-shadow: 0 4px 15px rgba(79, 70, 229, 0.4);
+  background: linear-gradient(135deg, #4338CA, #6D28D9);
+}
+
+[data-result="single-link"]:active,
+[data-result="download-url"]:active {
+  transform: translateY(0);
 }
 
 [data-result="link-list"] {
   list-style: none;
   padding: 0;
   margin: var(--wf-widget-spacing-md) 0 0 0;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: var(--wf-widget-spacing-sm);
 }
 
 [data-result="link-list"] li {
-  margin-bottom: var(--wf-widget-spacing-sm);
+  margin-bottom: 0; /* Remove margin since we're using gap */
 }
 
 [data-result="link-list"] a {
@@ -189,11 +259,22 @@
   text-decoration: none;
   border-radius: var(--wf-widget-border-radius);
   font-weight: 500;
-  transition: background-color var(--wf-widget-transition);
+  transition: all var(--wf-widget-transition);
 }
 
 [data-result="link-list"] a:hover {
   background-color: var(--wf-widget-primary-dark);
+  transform: translateY(-1px);
+}
+
+/* 🔧 FIXED: Metadata styling */
+[data-result="metadata"] {
+  margin-top: var(--wf-widget-spacing-md);
+  padding: var(--wf-widget-spacing-md);
+  background: var(--wf-widget-gray-light);
+  border-radius: var(--wf-widget-border-radius);
+  font-size: 14px;
+  color: var(--wf-widget-gray-dark);
 }
 
 /* Webflow-specific overrides and utilities */
@@ -201,11 +282,27 @@
   display: none !important;
 }
 
-/* Responsive adjustments */
+/* 🔧 FIXED: Responsive adjustments */
 @media (max-width: 767px) {
+  [data-component="WidgetShell"] {
+    max-width: 100%;
+    padding: 0 var(--wf-widget-spacing-md);
+  }
+  
   .dropzone {
     min-height: 120px;
     padding: var(--wf-widget-spacing-md);
+  }
+  
+  [data-component="ResultCard"] {
+    padding: var(--wf-widget-spacing-lg);
+    margin: var(--wf-widget-spacing-md) auto;
+  }
+  
+  [data-result="single-link"],
+  [data-result="download-url"] {
+    padding: 12px 24px;
+    font-size: 14px;
   }
 }
 
@@ -215,6 +312,31 @@
 }
 
 @keyframes fade-in {
-  from { opacity: 0; }
-  to { opacity: 1; }
+  from { opacity: 0; transform: translateY(10px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+/* 🔧 FIXED: Loading states */
+.wf-widget-loading {
+  pointer-events: none;
+  opacity: 0.7;
+}
+
+/* 🔧 FIXED: Success states with icons */
+[data-component="ResultCard"][data-kind="success"] [data-result="headline"]::before,
+[data-component="ResultCard"][data-kind="success"] [data-result="Headline"]::before {
+  content: "✅ ";
+  margin-right: 8px;
+}
+
+[data-component="ResultCard"][data-kind="error"] [data-result="headline"]::before,
+[data-component="ResultCard"][data-kind="error"] [data-result="Headline"]::before {
+  content: "❌ ";
+  margin-right: 8px;
+}
+
+[data-component="ResultCard"][data-kind="processing"] [data-result="headline"]::before,
+[data-component="ResultCard"][data-kind="processing"] [data-result="Headline"]::before {
+  content: "⏳ ";
+  margin-right: 8px;
 }

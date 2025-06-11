@@ -4,7 +4,7 @@
    --------------------------------------------- */
 
 // Version identifier
-const WIDGET_VERSION = '2.2.0-51282652';
+const WIDGET_VERSION = '2.3.0-2025.06.10';
 window.WIDGET_FACTORY_VERSION = WIDGET_VERSION;
 console.log(`🚀 Widget Factory v${WIDGET_VERSION} loading...`);
 
@@ -349,35 +349,103 @@ class WidgetShell {
     this.displayResult(resultData);
   }
 
-  /* Display result - matches your existing implementation */
+  /* Display result - DEBUG VERSION with auto-create */
   displayResult(result) {
     if (!this.resultCard) return;
+    
+    console.log('🔍 DEBUG: displayResult called with:', result);
     
     this.resultCard.dataset.kind = result.kind || 'success';
     this.resultCard.hidden = false;
     
-    // Set headline
-    const headlineEl = this.resultCard.querySelector('[data-result="headline"]');
+    // Set headline - FIXED: Webflow uses capital 'H'
+    const headlineEl = this.resultCard.querySelector('[data-result="Headline"]');
     if (headlineEl) headlineEl.textContent = result.headline || 'Processing Complete!';
     
     // Set text
     const textEl = this.resultCard.querySelector('[data-result="text"]');
     if (textEl) textEl.textContent = result.text || '';
     
+    // 🔍 DEBUG: Check download URL handling
+    console.log('🔍 Download URL check:', {
+      hasDownloadUrl: !!result.downloadUrl,
+      downloadUrl: result.downloadUrl,
+      fileName: result.fileName
+    });
+    
     // Handle download links
     if (result.downloadUrl) {
-      const downloadLink = this.resultCard.querySelector('[data-result="download-url"]');
-      if (downloadLink) {
-        downloadLink.href = result.downloadUrl;
-        downloadLink.download = result.fileName || 'download';
-        downloadLink.textContent = result.fileName || 'Download Result';
-        downloadLink.style.display = 'inline-block';
+      // 🎯 FIXED: Use correct selector for Webflow structure
+      let downloadLink = this.resultCard.querySelector('[data-result="single-link"]');
+      
+      console.log('🔍 Download link element found:', !!downloadLink);
+      
+      // ✅ CREATE ELEMENT IF IT DOESN'T EXIST
+      if (!downloadLink) {
+        console.log('🔧 Creating download link element...');
+        downloadLink = document.createElement('a');
+        downloadLink.setAttribute('data-result', 'single-link');
+        
+        // Find where to append it (after text element or at end of result card)
+        const textEl = this.resultCard.querySelector('[data-result="text"]');
+        if (textEl && textEl.parentNode) {
+          textEl.parentNode.insertBefore(downloadLink, textEl.nextSibling);
+        } else {
+          this.resultCard.appendChild(downloadLink);
+        }
       }
+      
+      // Set download attributes
+      downloadLink.href = result.downloadUrl;
+      downloadLink.download = result.fileName || 'compressed.pdf';
+      downloadLink.textContent = `📄 ${result.fileName || 'Download Compressed PDF'}`;
+      
+      console.log('🔧 Setting download link:', {
+        href: downloadLink.href,
+        download: downloadLink.download,
+        text: downloadLink.textContent
+      });
+      
+      // 🎨 STYLE AS BUTTON
+      downloadLink.style.cssText = `
+        display: inline-block !important;
+        background: #4F46E5;
+        color: white;
+        padding: 14px 28px;
+        border-radius: 8px;
+        text-decoration: none;
+        font-weight: 600;
+        font-size: 16px;
+        text-align: center;
+        cursor: pointer;
+        border: none;
+        transition: all 0.2s ease;
+        margin-top: 20px;
+        margin-bottom: 10px;
+        box-shadow: 0 2px 8px rgba(79, 70, 229, 0.3);
+      `;
+      
+      // Clear any existing event listeners and add new ones
+      downloadLink.onmouseenter = () => {
+        downloadLink.style.background = '#4338CA';
+        downloadLink.style.transform = 'translateY(-1px)';
+        downloadLink.style.boxShadow = '0 4px 12px rgba(79, 70, 229, 0.4)';
+      };
+      
+      downloadLink.onmouseleave = () => {
+        downloadLink.style.background = '#4F46E5';
+        downloadLink.style.transform = 'translateY(0)';
+        downloadLink.style.boxShadow = '0 2px 8px rgba(79, 70, 229, 0.3)';
+      };
+      
+      console.log('✅ Download button configured and should be visible');
+    } else {
+      console.log('❌ No downloadUrl in result data');
     }
     
-    // Handle multiple downloads
+    // Handle multiple downloads - FIXED: Use link-list for Webflow
     if (result.downloadUrls && result.downloadUrls.length > 0) {
-      const downloadContainer = this.resultCard.querySelector('[data-result="downloads"]');
+      const downloadContainer = this.resultCard.querySelector('[data-result="link-list"]');
       if (downloadContainer) {
         downloadContainer.innerHTML = '';
         result.downloadUrls.forEach((url, index) => {
@@ -386,8 +454,36 @@ class WidgetShell {
           link.download = result.fileNames?.[index] || `file_${index + 1}`;
           link.textContent = result.fileNames?.[index] || `Download File ${index + 1}`;
           link.className = 'download-link';
-          link.style.display = 'block';
-          link.style.marginTop = '5px';
+          
+          // 🎨 STYLE AS BUTTON (consistent with single download)
+          link.style.cssText = `
+            display: inline-block;
+            background: #4F46E5;
+            color: white;
+            padding: 10px 20px;
+            border-radius: 6px;
+            text-decoration: none;
+            font-weight: 600;
+            font-size: 13px;
+            text-align: center;
+            cursor: pointer;
+            border: none;
+            transition: all 0.2s ease;
+            margin-top: 8px;
+            margin-right: 8px;
+          `;
+          
+          // Add hover effects
+          link.addEventListener('mouseenter', () => {
+            link.style.background = '#4338CA';
+            link.style.transform = 'translateY(-1px)';
+          });
+          
+          link.addEventListener('mouseleave', () => {
+            link.style.background = '#4F46E5';
+            link.style.transform = 'translateY(0)';
+          });
+          
           downloadContainer.appendChild(link);
         });
       }

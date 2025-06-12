@@ -4,7 +4,7 @@
    --------------------------------------------- */
 
 // Version identifier
-const WIDGET_VERSION = '2.3.0-2025.06.10';
+const WIDGET_VERSION = '2.5.0-code-embed-fixed';
 window.WIDGET_FACTORY_VERSION = WIDGET_VERSION;
 console.log(`🚀 Widget Factory v${WIDGET_VERSION} loading...`);
 
@@ -349,7 +349,7 @@ class WidgetShell {
     this.displayResult(resultData);
   }
 
-  /* Display result - DEBUG VERSION with auto-create */
+  /* 🔧 FIXED: Display result - Updated to match code embed structure */
   displayResult(result) {
     if (!this.resultCard) return;
     
@@ -358,11 +358,11 @@ class WidgetShell {
     this.resultCard.dataset.kind = result.kind || 'success';
     this.resultCard.hidden = false;
     
-    // Set headline - FIXED: Webflow uses capital 'H'
-    const headlineEl = this.resultCard.querySelector('[data-result="Headline"]');
+    // 🔧 FIXED: Use lowercase "headline" to match code embed
+    const headlineEl = this.resultCard.querySelector('[data-result="headline"]');
     if (headlineEl) headlineEl.textContent = result.headline || 'Processing Complete!';
     
-    // Set text
+    // Set text (this matches)
     const textEl = this.resultCard.querySelector('[data-result="text"]');
     if (textEl) textEl.textContent = result.text || '';
     
@@ -373,79 +373,59 @@ class WidgetShell {
       fileName: result.fileName
     });
     
-    // Handle download links
+    // 🔧 FIXED: Handle single download link using "link" instead of "single-link"
     if (result.downloadUrl) {
-      // 🎯 FIXED: Use correct selector for Webflow structure
-      let downloadLink = this.resultCard.querySelector('[data-result="single-link"]');
+      let downloadLink = this.resultCard.querySelector('[data-result="link"]');
       
       console.log('🔍 Download link element found:', !!downloadLink);
       
-      // ✅ CREATE ELEMENT IF IT DOESN'T EXIST
-      if (!downloadLink) {
-        console.log('🔧 Creating download link element...');
-        downloadLink = document.createElement('a');
-        downloadLink.setAttribute('data-result', 'single-link');
+      if (downloadLink) {
+        downloadLink.href = result.downloadUrl;
+        downloadLink.download = result.fileName || 'compressed.pdf';
+        downloadLink.textContent = `📄 ${result.fileName || 'Download Compressed PDF'}`;
+        downloadLink.style.display = 'inline-block'; // Show the link
         
-        // Find where to append it (after text element or at end of result card)
-        const textEl = this.resultCard.querySelector('[data-result="text"]');
-        if (textEl && textEl.parentNode) {
-          textEl.parentNode.insertBefore(downloadLink, textEl.nextSibling);
-        } else {
-          this.resultCard.appendChild(downloadLink);
-        }
+        // 🎨 STYLE AS BUTTON
+        downloadLink.style.cssText = `
+          display: inline-block !important;
+          background: #4F46E5;
+          color: white;
+          padding: 14px 28px;
+          border-radius: 8px;
+          text-decoration: none;
+          font-weight: 600;
+          font-size: 16px;
+          text-align: center;
+          cursor: pointer;
+          border: none;
+          transition: all 0.2s ease;
+          margin-top: 20px;
+          margin-bottom: 10px;
+          box-shadow: 0 2px 8px rgba(79, 70, 229, 0.3);
+        `;
+        
+        // Clear any existing event listeners and add new ones
+        downloadLink.onmouseenter = () => {
+          downloadLink.style.background = '#4338CA';
+          downloadLink.style.transform = 'translateY(-1px)';
+          downloadLink.style.boxShadow = '0 4px 12px rgba(79, 70, 229, 0.4)';
+        };
+        
+        downloadLink.onmouseleave = () => {
+          downloadLink.style.background = '#4F46E5';
+          downloadLink.style.transform = 'translateY(0)';
+          downloadLink.style.boxShadow = '0 2px 8px rgba(79, 70, 229, 0.3)';
+        };
+        
+        console.log('✅ Download button configured and visible');
+      } else {
+        console.log('❌ Download link element not found - check code embed structure');
       }
-      
-      // Set download attributes
-      downloadLink.href = result.downloadUrl;
-      downloadLink.download = result.fileName || 'compressed.pdf';
-      downloadLink.textContent = `📄 ${result.fileName || 'Download Compressed PDF'}`;
-      
-      console.log('🔧 Setting download link:', {
-        href: downloadLink.href,
-        download: downloadLink.download,
-        text: downloadLink.textContent
-      });
-      
-      // 🎨 STYLE AS BUTTON
-      downloadLink.style.cssText = `
-        display: inline-block !important;
-        background: #4F46E5;
-        color: white;
-        padding: 14px 28px;
-        border-radius: 8px;
-        text-decoration: none;
-        font-weight: 600;
-        font-size: 16px;
-        text-align: center;
-        cursor: pointer;
-        border: none;
-        transition: all 0.2s ease;
-        margin-top: 20px;
-        margin-bottom: 10px;
-        box-shadow: 0 2px 8px rgba(79, 70, 229, 0.3);
-      `;
-      
-      // Clear any existing event listeners and add new ones
-      downloadLink.onmouseenter = () => {
-        downloadLink.style.background = '#4338CA';
-        downloadLink.style.transform = 'translateY(-1px)';
-        downloadLink.style.boxShadow = '0 4px 12px rgba(79, 70, 229, 0.4)';
-      };
-      
-      downloadLink.onmouseleave = () => {
-        downloadLink.style.background = '#4F46E5';
-        downloadLink.style.transform = 'translateY(0)';
-        downloadLink.style.boxShadow = '0 2px 8px rgba(79, 70, 229, 0.3)';
-      };
-      
-      console.log('✅ Download button configured and should be visible');
-    } else {
-      console.log('❌ No downloadUrl in result data');
     }
     
-    // Handle multiple downloads - FIXED: Use link-list for Webflow
+    // 🔧 FIXED: Handle multiple downloads using "links" instead of "link-list"
     if (result.downloadUrls && result.downloadUrls.length > 0) {
-      const downloadContainer = this.resultCard.querySelector('[data-result="link-list"]');
+      const downloadContainer = this.resultCard.querySelector('[data-result="links"]');
       if (downloadContainer) {
         downloadContainer.innerHTML = '';
         result.downloadUrls.forEach((url, index) => {
@@ -489,11 +469,11 @@ class WidgetShell {
       }
     }
     
-    // Add metadata display if present
+    // 🔧 FIXED: Add metadata using "extraHtml" instead of "metadata"
     if (result.metadata) {
-      const metadataEl = this.resultCard.querySelector('[data-result="metadata"]');
-      if (metadataEl) {
-        let metadataHtml = '';
+      const extraHtmlEl = this.resultCard.querySelector('[data-result="extraHtml"]');
+      if (extraHtmlEl) {
+        let metadataHtml = '<div class="metadata-display">';
         if (result.metadata.compressedSize) {
           metadataHtml += `<p>💾 Size: ${this.formatFileSize(result.metadata.compressedSize)}</p>`;
         }

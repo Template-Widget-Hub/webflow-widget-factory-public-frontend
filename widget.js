@@ -4,7 +4,7 @@
    --------------------------------------------- */
 
 // Version identifier
-const WIDGET_VERSION = '2.5.1-error-handling-fixed';
+const WIDGET_VERSION = '2.5.2-hide-dropzone';
 window.WIDGET_FACTORY_VERSION = WIDGET_VERSION;
 console.log(`🚀 Widget Factory v${WIDGET_VERSION} loading...`);
 
@@ -380,6 +380,11 @@ class WidgetShell {
     this.resultCard.dataset.kind = result.kind || 'success';
     this.resultCard.hidden = false;
     
+    // Hide the file input dropzone when showing results
+    if (this.fileInput) {
+      this.fileInput.style.display = 'none';
+    }
+    
     // 🔧 FIXED: Use lowercase "headline" to match code embed
     const headlineEl = this.resultCard.querySelector('[data-result="headline"]');
     if (headlineEl) headlineEl.textContent = result.headline || 'Processing Complete!';
@@ -573,6 +578,11 @@ class WidgetShell {
     if (textEl) textEl.textContent = 'Starting processing...';
     this.resultCard.hidden = false;
     
+    // Hide the file input dropzone when showing upload success
+    if (this.fileInput) {
+      this.fileInput.style.display = 'none';
+    }
+    
     console.log(`✅ Files uploaded successfully:`, fileKeys);
     console.log(`🔄 Monitoring job progress...`);
   }
@@ -620,6 +630,11 @@ class WidgetShell {
         el.innerHTML   = '';
       }
     });
+    
+    // Show the file input dropzone again when resetting
+    if (this.fileInput) {
+      this.fileInput.style.display = '';
+    }
   }
 
   showError(msg = 'Something went wrong') {
@@ -631,6 +646,11 @@ class WidgetShell {
     const textEl = this.resultCard.querySelector('[data-result="text"]');
     if (textEl) textEl.textContent = msg;
     this.resultCard.hidden = false;
+    
+    // Hide the file input dropzone when showing error
+    if (this.fileInput) {
+      this.fileInput.style.display = 'none';
+    }
   }
 
   getAnonId() {

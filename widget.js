@@ -4,7 +4,7 @@
    --------------------------------------------- */
 
 // Version identifier
-const WIDGET_VERSION = '2.5.0-code-embed-fixed';
+const WIDGET_VERSION = '2.5.1-error-handling-fixed';
 window.WIDGET_FACTORY_VERSION = WIDGET_VERSION;
 console.log(`🚀 Widget Factory v${WIDGET_VERSION} loading...`);
 
@@ -140,13 +140,19 @@ class WidgetShell {
             if (retryJobId) {
               this.monitorJobProgress(retryJobId);
             } else {
-              this.showError('Job not found - please try again');
+              // Only show error if no result is already displayed
+              if (this.resultCard.hidden || !this.resultCard.querySelector('[data-result="link"]')?.href) {
+                this.showError('Processing timeout - please try again');
+              } else {
+                console.log('Result already displayed via webhook, skipping error');
+              }
             }
           }, 3000);
         }
       } catch (error) {
         console.error('Error getting job ID:', error);
-        this.showError('Failed to start monitoring - please refresh and try again');
+        // Don't show error immediately - the webhook might still return results
+        console.warn('Job monitoring failed, but processing may still complete via webhook');
       }
     }, 1500); // Wait 1.5 seconds for storage trigger
   }
@@ -235,6 +241,13 @@ class WidgetShell {
     const pollInterval = setInterval(async () => {
       pollCount++;
       
+      // Check if result is already displayed (e.g., via direct webhook response)
+      if (!this.resultCard.hidden && this.resultCard.querySelector('[data-result="link"]')?.href) {
+        console.log('Result already displayed, stopping job monitoring');
+        clearInterval(pollInterval);
+        return;
+      }
+      
       try {
         const response = await fetch(`${this.SUPABASE_URL}/rest/v1/widget_jobs?id=eq.${jobId}&select=*`, {
           headers: {
@@ -253,7 +266,10 @@ class WidgetShell {
         
         if (!job) {
           clearInterval(pollInterval);
-          this.showError('Job not found');
+          // Only show error if no result is already displayed
+          if (this.resultCard.hidden || !this.resultCard.querySelector('[data-result="link"]')?.href) {
+            this.showError('Job not found');
+          }
           return;
         }
         
@@ -285,14 +301,20 @@ class WidgetShell {
         console.error('Polling error:', error);
         if (pollCount > 10) { // Only fail after multiple retries
           clearInterval(pollInterval);
-          this.showError('Monitoring failed - please refresh and try again');
+          // Only show error if no result is already displayed
+          if (this.resultCard.hidden || !this.resultCard.querySelector('[data-result="link"]')?.href) {
+            this.showError('Monitoring failed - please refresh and try again');
+          }
         }
       }
       
       // Stop polling after max attempts
       if (pollCount >= maxPolls) {
         clearInterval(pollInterval);
-        this.showError('Processing timeout - please refresh and try again');
+        // Only show error if no result is already displayed
+        if (this.resultCard.hidden || !this.resultCard.querySelector('[data-result="link"]')?.href) {
+          this.showError('Processing timeout - please refresh and try again');
+        }
       }
     }, 2000); // Poll every 2 seconds
   }

@@ -4,7 +4,7 @@
    --------------------------------------------- */
 
 // Version identifier
-const WIDGET_VERSION = '2.5.3-table-fix';
+const WIDGET_VERSION = '2.5.5-widget-jobs-only';
 window.WIDGET_FACTORY_VERSION = WIDGET_VERSION;
 console.log(`🚀 Widget Factory v${WIDGET_VERSION} loading...`);
 
@@ -154,55 +154,59 @@ class WidgetShell {
         // Don't show error immediately - the webhook might still return results
         console.warn('Job monitoring failed, but processing may still complete via webhook');
       }
-    }, 1500); // Wait 1.5 seconds for storage trigger
+    }, 2000); // Wait 2 seconds for storage trigger
   }
 
   /* Method to get job ID from database based on uploaded files */
   async getJobId(fileKeys) {
     try {
-      // Try both possible table names for compatibility
-      const tables = ['widget_requests', 'widget_jobs'];
-      let allJobs = [];
+      // Query widget_jobs table
+      console.log(`🔍 Checking widget_jobs table...`);
       
-      for (const table of tables) {
-        console.log(`🔍 Checking ${table} table...`);
-        
-        const response = await fetch(
-          `${this.SUPABASE_URL}/rest/v1/${table}?user_id=eq.${this.anonId}&widget_id=eq.${this.widgetSlug}&order=created_at.desc&limit=5`, 
-          {
-            headers: {
-              'Authorization': `Bearer ${this.SUPABASE_ANON_KEY}`,
-              'apikey': this.SUPABASE_ANON_KEY
-            }
+      const response = await fetch(
+        `${this.SUPABASE_URL}/rest/v1/widget_jobs?user_id=eq.${this.anonId}&widget_id=eq.${this.widgetSlug}&order=created_at.desc&limit=5`, 
+        {
+          headers: {
+            'Authorization': `Bearer ${this.SUPABASE_ANON_KEY}`,
+            'apikey': this.SUPABASE_ANON_KEY
           }
-        );
-        
-        if (response.ok) {
-          const jobs = await response.json();
-          console.log(`Found ${jobs.length} jobs in ${table}:`, jobs);
-          allJobs = allJobs.concat(jobs);
-        } else {
-          console.log(`Table ${table} not accessible:`, response.status);
         }
+      );
+      
+      if (!response.ok) {
+        console.error('Failed to query widget_jobs:', response.status, response.statusText);
+        return null;
       }
       
+      const allJobs = await response.json();
+      console.log(`Found ${allJobs.length} jobs:`, allJobs);
+      
       if (allJobs.length === 0) {
-        console.log('No jobs found in either table');
+        console.log('No jobs found yet');
         return null;
       }
       
       // Find job that matches our file keys
-      for (const job of jobs) {
+      for (const job of allJobs) {
         if (this.jobMatchesFiles(job, fileKeys)) {
           console.log('Found matching job:', job.id);
           return job.id;
         }
       }
       
-      // If no exact match, return the most recent job
-      // (this handles cases where file_keys format might differ slightly)
-      console.log('No exact match found, using most recent job:', jobs[0].id);
-      return jobs[0].id;
+      // If no exact match, try time-based matching for recent jobs
+      const recentCutoff = Date.now() - 30000; // 30 seconds ago
+      for (const job of allJobs) {
+        const jobTime = new Date(job.created_at).getTime();
+        if (jobTime > recentCutoff) {
+          console.log('Using recent job (within 30s):', job.id);
+          return job.id;
+        }
+      }
+      
+      // If still no match, return the most recent job
+      console.log('No exact match found, using most recent job:', allJobs[0].id);
+      return allJobs[0].id;
       
     } catch (error) {
       console.error('Error fetching job ID:', error);
@@ -256,20 +260,23 @@ class WidgetShell {
       }
       
       try {
-        const response = await fetch(`${this.SUPABASE_URL}/rest/v1/widget_jobs?id=eq.${jobId}&select=*`, {
+        let job = null;
+        let response;
+        
+        // Query widget_jobs table
+        response = await fetch(`${this.SUPABASE_URL}/rest/v1/widget_jobs?id=eq.${jobId}&select=*`, {
           headers: {
             'Authorization': `Bearer ${this.SUPABASE_ANON_KEY}`,
             'apikey': this.SUPABASE_ANON_KEY
           }
         });
         
-        if (!response.ok) {
-          console.error('Polling failed:', response.status);
-          return;
+        if (response.ok) {
+          const jobs = await response.json();
+          job = jobs[0];
+        } else {
+          console.error('Failed to fetch job:', response.status);
         }
-        
-        const jobs = await response.json();
-        const job = jobs[0];
         
         if (!job) {
           clearInterval(pollInterval);

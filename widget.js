@@ -4,7 +4,7 @@
    --------------------------------------------- */
 
 // Version identifier
-const WIDGET_VERSION = '2.5.5-widget-jobs-only';
+const WIDGET_VERSION = '2.5.6-job-matching-fix';
 window.WIDGET_FACTORY_VERSION = WIDGET_VERSION;
 console.log(`🚀 Widget Factory v${WIDGET_VERSION} loading...`);
 
@@ -188,18 +188,31 @@ class WidgetShell {
       
       // Find job that matches our file keys
       for (const job of allJobs) {
+        console.log(`🔍 Checking job ${job.id}:`, {
+          created_at: job.created_at,
+          file_keys: job.file_keys,
+          status: job.status,
+          widget_id: job.widget_id
+        });
+        
         if (this.jobMatchesFiles(job, fileKeys)) {
-          console.log('Found matching job:', job.id);
+          console.log('✅ Found matching job:', job.id);
           return job.id;
+        } else {
+          console.log('❌ Job does not match files');
         }
       }
       
-      // If no exact match, try time-based matching for recent jobs
-      const recentCutoff = Date.now() - 30000; // 30 seconds ago
+      // If no exact match, try time-based matching for recent jobs  
+      console.log('⚠️ No exact file match found, trying time-based matching...');
+      const recentCutoff = Date.now() - 60000; // Increase to 60 seconds
       for (const job of allJobs) {
         const jobTime = new Date(job.created_at).getTime();
+        const jobAge = Date.now() - jobTime;
+        console.log(`Job ${job.id} age: ${jobAge}ms (cutoff: ${60000}ms)`);
+        
         if (jobTime > recentCutoff) {
-          console.log('Using recent job (within 30s):', job.id);
+          console.log('✅ Using recent job (within 60s):', job.id);
           return job.id;
         }
       }
@@ -219,23 +232,52 @@ class WidgetShell {
     try {
       let jobFileKeys = job.file_keys;
       
+      console.log('🔍 Matching files:', {
+        uploaded_keys: fileKeys,
+        job_file_keys: jobFileKeys,
+        job_id: job.id
+      });
+      
       // Handle case where file_keys is stored as JSON string
       if (typeof jobFileKeys === 'string') {
-        jobFileKeys = JSON.parse(jobFileKeys);
-      }
-      
-      if (!Array.isArray(jobFileKeys)) {
-        console.log('Job file_keys is not an array:', jobFileKeys);
-        return false;
-      }
-      
-      // Check if any of our file keys match the job's file keys
-      for (const fileKey of fileKeys) {
-        if (jobFileKeys.some(jobKey => jobKey.includes(fileKey) || fileKey.includes(jobKey))) {
-          return true;
+        try {
+          jobFileKeys = JSON.parse(jobFileKeys);
+        } catch (e) {
+          console.warn('Failed to parse job file_keys as JSON:', jobFileKeys);
+          return false;
         }
       }
       
+      if (!Array.isArray(jobFileKeys)) {
+        console.log('❌ Job file_keys is not an array:', jobFileKeys);
+        return false;
+      }
+      
+      // More precise matching - check for actual file name matches
+      for (const fileKey of fileKeys) {
+        const uploadedFileName = fileKey.split('/').pop(); // Get just the filename
+        
+        for (const jobKey of jobFileKeys) {
+          const jobFileName = jobKey.split('/').pop(); // Get just the filename
+          
+          // Check if filenames contain similar patterns (timestamps + original name)
+          if (uploadedFileName === jobFileName || 
+              uploadedFileName.includes(jobFileName) || 
+              jobFileName.includes(uploadedFileName)) {
+            console.log('✅ File match found:', uploadedFileName, '←→', jobFileName);
+            return true;
+          }
+        }
+      }
+      
+      // Also check timestamp-based matching for very recent jobs (within 60 seconds)
+      const jobAge = Date.now() - new Date(job.created_at).getTime();
+      if (jobAge < 60000) {
+        console.log('✅ Recent job found (within 60s), assuming it matches. Age:', jobAge + 'ms');
+        return true;
+      }
+      
+      console.log('❌ No file match found');
       return false;
       
     } catch (error) {

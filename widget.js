@@ -4,7 +4,7 @@
    --------------------------------------------- */
 
 // Version identifier
-const WIDGET_VERSION = '2.5.2-hide-dropzone';
+const WIDGET_VERSION = '2.5.3-table-fix';
 window.WIDGET_FACTORY_VERSION = WIDGET_VERSION;
 console.log(`🚀 Widget Factory v${WIDGET_VERSION} loading...`);
 
@@ -160,27 +160,34 @@ class WidgetShell {
   /* Method to get job ID from database based on uploaded files */
   async getJobId(fileKeys) {
     try {
-      // Query for recent jobs by this user and widget
-      const response = await fetch(
-        `${this.SUPABASE_URL}/rest/v1/widget_jobs?user_id=eq.${this.anonId}&widget_id=eq.${this.widgetSlug}&order=created_at.desc&limit=3`, 
-        {
-          headers: {
-            'Authorization': `Bearer ${this.SUPABASE_ANON_KEY}`,
-            'apikey': this.SUPABASE_ANON_KEY
-          }
-        }
-      );
+      // Try both possible table names for compatibility
+      const tables = ['widget_requests', 'widget_jobs'];
+      let allJobs = [];
       
-      if (!response.ok) {
-        console.error('Failed to query jobs:', response.status, response.statusText);
-        return null;
+      for (const table of tables) {
+        console.log(`🔍 Checking ${table} table...`);
+        
+        const response = await fetch(
+          `${this.SUPABASE_URL}/rest/v1/${table}?user_id=eq.${this.anonId}&widget_id=eq.${this.widgetSlug}&order=created_at.desc&limit=5`, 
+          {
+            headers: {
+              'Authorization': `Bearer ${this.SUPABASE_ANON_KEY}`,
+              'apikey': this.SUPABASE_ANON_KEY
+            }
+          }
+        );
+        
+        if (response.ok) {
+          const jobs = await response.json();
+          console.log(`Found ${jobs.length} jobs in ${table}:`, jobs);
+          allJobs = allJobs.concat(jobs);
+        } else {
+          console.log(`Table ${table} not accessible:`, response.status);
+        }
       }
       
-      const jobs = await response.json();
-      console.log('Found jobs:', jobs);
-      
-      if (!jobs || jobs.length === 0) {
-        console.log('No jobs found yet');
+      if (allJobs.length === 0) {
+        console.log('No jobs found in either table');
         return null;
       }
       

@@ -4,7 +4,7 @@
    --------------------------------------------- */
 
 // Version identifier
-const WIDGET_VERSION = '2.5.9-checksum-with-fallback';
+const WIDGET_VERSION = '2.5.9-filename-matching';
 window.WIDGET_FACTORY_VERSION = WIDGET_VERSION;
 console.log(`🚀 Widget Factory v${WIDGET_VERSION} loading...`);
 
@@ -58,25 +58,6 @@ class WidgetShell {
     this.checkUserCredits();
   }
 
-  /* Calculate MD5 checksum of file for precise job matching */
-  async calculateFileChecksum(file) {
-    return new Promise((resolve) => {
-      const reader = new FileReader();
-      reader.onload = async (e) => {
-        try {
-          const arrayBuffer = e.target.result;
-          const hashBuffer = await crypto.subtle.digest('SHA-256', arrayBuffer);
-          const hashArray = Array.from(new Uint8Array(hashBuffer));
-          const hashHex = hashArray.map(b => b.toString(16).padStart(2, '0')).join('');
-          resolve(hashHex);
-        } catch (error) {
-          console.error('Error calculating checksum:', error);
-          resolve(null);
-        }
-      };
-      reader.readAsArrayBuffer(file);
-    });
-  }
 
   /* Enhanced handleFiles with job monitoring */
   async handleFiles(files) {
@@ -91,11 +72,6 @@ class WidgetShell {
     /* Upload all files first */
     for (const file of files) {
       try {
-        // Calculate checksum first
-        console.log('Calculating checksum for:', file.name);
-        const checksum = await this.calculateFileChecksum(file);
-        console.log('File checksum:', checksum);
-        
         /* 2.1 Get presigned URL */
         console.log('Presign endpoint:', this.presignEndpoint);
         console.log('Widget ID:', this.widgetSlug);
@@ -142,11 +118,11 @@ class WidgetShell {
         if (!up.ok) throw new Error('Upload failed');
         fileKeys.push(key);
         
-        // Store file data with checksum
+        // Store file data without checksum calculation
         fileData.push({
           key: key,
-          checksum: checksum,
-          fileName: file.name
+          fileName: file.name,
+          uploadTime: Date.now()
         });
         
       } catch (err) {
@@ -190,70 +166,11 @@ class WidgetShell {
     }, 2000); // Wait 2 seconds for storage trigger
   }
 
-  /* Get job ID using checksum-based matching (much more reliable) */
+  /* Get job ID using time and file name matching */
   async getJobId(fileData) {
     try {
-      console.log(`🔍 Finding job using checksum matching...`);
-      console.log('File data:', fileData);
+      console.log(`🔍 Finding job using time + filename matching...`);
       
-      // For single file uploads, use the checksum directly
-      if (fileData.length === 1) {
-        const targetChecksum = fileData[0].checksum;
-        console.log(`🔑 Searching for job with checksum: ${targetChecksum}`);
-        
-        const response = await fetch(
-          `${this.SUPABASE_URL}/rest/v1/widget_jobs?checksum=eq.${targetChecksum}&user_id=eq.${this.anonId}&widget_id=eq.${this.widgetSlug}&select=*&order=created_at.desc&limit=1`, 
-          {
-            headers: {
-              'Authorization': `Bearer ${this.SUPABASE_ANON_KEY}`,
-              'apikey': this.SUPABASE_ANON_KEY
-            }
-          }
-        );
-        
-        if (!response.ok) {
-          console.error('Failed to query jobs by checksum:', response.status, response.statusText);
-          return null;
-        }
-        
-        const jobs = await response.json();
-        console.log(`Found ${jobs.length} jobs with checksum ${targetChecksum}:`, jobs);
-        
-        if (jobs.length > 0) {
-          const job = jobs[0];
-          console.log(`✅ Found exact checksum match: ${job.id}`);
-          return job.id;
-        } else {
-          console.log('❌ No job found with matching checksum');
-          // Fallback: For transition period, try recent jobs
-          console.log('⚠️ Falling back to recent job matching...');
-          const recentResponse = await fetch(
-            `${this.SUPABASE_URL}/rest/v1/widget_jobs?user_id=eq.${this.anonId}&widget_id=eq.${this.widgetSlug}&order=created_at.desc&limit=1`, 
-            {
-              headers: {
-                'Authorization': `Bearer ${this.SUPABASE_ANON_KEY}`,
-                'apikey': this.SUPABASE_ANON_KEY
-              }
-            }
-          );
-          
-          if (recentResponse.ok) {
-            const recentJobs = await recentResponse.json();
-            if (recentJobs.length > 0) {
-              const job = recentJobs[0];
-              const jobAge = Date.now() - new Date(job.created_at).getTime();
-              if (jobAge < 30000) { // Within 30 seconds
-                console.log(`⚠️ Using recent job (${jobAge}ms old): ${job.id}`);
-                return job.id;
-              }
-            }
-          }
-          return null;
-        }
-      }
-      
-      // For multiple files, query recent jobs and match checksums
-      console.log('🔍 Multiple files - checking recent jobs...');
       const response = await fetch(
         `${this.SUPABASE_URL}/rest/v1/widget_jobs?user_id=eq.${this.anonId}&widget_id=eq.${this.widgetSlug}&order=created_at.desc&limit=10`, 
         {
@@ -265,27 +182,81 @@ class WidgetShell {
       );
       
       if (!response.ok) {
-        console.error('Failed to query recent jobs:', response.status, response.statusText);
+        console.error('Failed to query jobs:', response.status, response.statusText);
         return null;
       }
       
-      const allJobs = await response.json();
-      const targetChecksums = fileData.map(f => f.checksum);
-      console.log('Target checksums:', targetChecksums);
+      const jobs = await response.json();
+      console.log(`Found ${jobs.length} recent jobs:`, jobs);
       
-      // Find job with matching checksum(s)
-      for (const job of allJobs) {
-        if (targetChecksums.includes(job.checksum)) {
-          console.log(`✅ Found job with matching checksum: ${job.id} (checksum: ${job.checksum})`);
-          return job.id;
+      if (jobs.length === 0) {
+        console.log('❌ No jobs found');
+        return null;
+      }
+      
+      // For single file uploads, find the most recent job that matches our file
+      if (fileData.length === 1) {
+        const uploadedFile = fileData[0];
+        const uploadTime = uploadedFile.uploadTime;
+        
+        console.log('Looking for job matching:', {
+          fileName: uploadedFile.fileName,
+          uploadTime: new Date(uploadTime).toISOString(),
+          fileKey: uploadedFile.key
+        });
+        
+        // Find job created within 60 seconds of upload with matching file
+        const cutoff = uploadTime - 60000; // 60 seconds before upload
+        
+        for (const job of jobs) {
+          const jobTime = new Date(job.created_at).getTime();
+          
+          console.log(`Checking job ${job.id}:`, {
+            created_at: job.created_at,
+            file_keys: job.file_keys,
+            status: job.status,
+            age_from_upload: uploadTime - jobTime
+          });
+          
+          // Check if job was created around the same time
+          if (jobTime > cutoff) {
+            // Check if file names/keys match
+            if (job.file_keys && Array.isArray(job.file_keys)) {
+              for (const jobFileKey of job.file_keys) {
+                // Extract base filename from both keys
+                const jobFileName = jobFileKey.split('/').pop();
+                const uploadFileName = uploadedFile.key.split('/').pop();
+                
+                console.log(`Comparing filenames: "${jobFileName}" vs "${uploadFileName}"`);
+                
+                // Check if the core filename matches (ignoring timestamp prefixes)
+                const jobBaseName = jobFileName.replace(/^\d+_/, '');
+                const uploadBaseName = uploadFileName.replace(/^\d+_/, '');
+                
+                if (jobBaseName === uploadBaseName || jobFileName === uploadFileName) {
+                  console.log(`✅ Found matching job: ${job.id} (filename match)`);
+                  return job.id;
+                }
+              }
+            }
+          }
+        }
+        
+        // If no filename match, use the most recent job
+        const mostRecent = jobs[0];
+        const timeDiff = uploadTime - new Date(mostRecent.created_at).getTime();
+        
+        if (timeDiff < 60000 && timeDiff > -10000) { // Within 60 seconds, not too far in the future
+          console.log(`✅ Using most recent job as fallback: ${mostRecent.id} (${timeDiff}ms difference)`);
+          return mostRecent.id;
         }
       }
       
-      console.log('❌ No jobs found with matching checksums');
+      console.log('❌ No matching job found');
       return null;
       
     } catch (error) {
-      console.error('Error finding job by checksum:', error);
+      console.error('Error finding job:', error);
       return null;
     }
   }

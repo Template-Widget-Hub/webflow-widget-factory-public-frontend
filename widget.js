@@ -4,7 +4,7 @@
    --------------------------------------------- */
 
 // Version identifier
-const WIDGET_VERSION = '2.5.8-checksum-matching';
+const WIDGET_VERSION = '2.5.9-checksum-with-fallback';
 window.WIDGET_FACTORY_VERSION = WIDGET_VERSION;
 console.log(`🚀 Widget Factory v${WIDGET_VERSION} loading...`);
 
@@ -225,6 +225,29 @@ class WidgetShell {
           return job.id;
         } else {
           console.log('❌ No job found with matching checksum');
+          // Fallback: For transition period, try recent jobs
+          console.log('⚠️ Falling back to recent job matching...');
+          const recentResponse = await fetch(
+            `${this.SUPABASE_URL}/rest/v1/widget_jobs?user_id=eq.${this.anonId}&widget_id=eq.${this.widgetSlug}&order=created_at.desc&limit=1`, 
+            {
+              headers: {
+                'Authorization': `Bearer ${this.SUPABASE_ANON_KEY}`,
+                'apikey': this.SUPABASE_ANON_KEY
+              }
+            }
+          );
+          
+          if (recentResponse.ok) {
+            const recentJobs = await recentResponse.json();
+            if (recentJobs.length > 0) {
+              const job = recentJobs[0];
+              const jobAge = Date.now() - new Date(job.created_at).getTime();
+              if (jobAge < 30000) { // Within 30 seconds
+                console.log(`⚠️ Using recent job (${jobAge}ms old): ${job.id}`);
+                return job.id;
+              }
+            }
+          }
           return null;
         }
       }

@@ -351,39 +351,86 @@ class WidgetShell {
     }, 2000); // Poll every 2 seconds
   }
 
-  /* Parse job result data (handles webhook response format) */
+  /* Enhanced parseJobResult method with detailed debugging */
   parseJobResult(resultData) {
+    console.log('🔍 [DEBUG] parseJobResult called with:', {
+      type: typeof resultData,
+      value: resultData,
+      hasKind: resultData?.kind,
+      isString: typeof resultData === 'string',
+      isObject: typeof resultData === 'object'
+    });
+
     try {
-      // If result_data is already an object with the expected structure
+      // Handle null/undefined
+      if (!resultData) {
+        console.log('❌ [DEBUG] resultData is null/undefined');
+        return null;
+      }
+
+      // Handle string (JSON) - this is likely the issue
+      if (typeof resultData === 'string') {
+        console.log('🔧 [DEBUG] resultData is string, attempting to parse JSON');
+        try {
+          const parsed = JSON.parse(resultData);
+          console.log('✅ [DEBUG] Successfully parsed JSON:', parsed);
+          
+          // Check if parsed object has the expected structure
+          if (parsed && typeof parsed === 'object' && parsed.kind) {
+            console.log('✅ [DEBUG] Parsed object has kind property:', parsed.kind);
+            return parsed;
+          }
+          
+          // Update resultData for further processing
+          resultData = parsed;
+        } catch (parseError) {
+          console.error('❌ [DEBUG] Failed to parse JSON string:', parseError);
+          return null;
+        }
+      }
+
+      // Handle object with kind property (direct result)
       if (resultData && typeof resultData === 'object' && resultData.kind) {
-        console.log('Result data is already in correct format');
+        console.log('✅ [DEBUG] Result data is already in correct format with kind:', resultData.kind);
         return resultData;
       }
-      
-      // Handle if resultData is a string (JSON)
-      let parsed = resultData;
-      if (typeof resultData === 'string') {
-        parsed = JSON.parse(resultData);
-      }
-      
+
       // Handle webhook response format: { "job_id": { status: "completed", result_data: {...} } }
-      if (parsed && typeof parsed === 'object') {
-        // Get the first key (job ID)
-        const jobKeys = Object.keys(parsed);
+      if (resultData && typeof resultData === 'object') {
+        console.log('🔧 [DEBUG] Checking for webhook response format...');
+        const jobKeys = Object.keys(resultData);
+        console.log('🔍 [DEBUG] Object keys:', jobKeys);
+        
         if (jobKeys.length > 0) {
-          const jobData = parsed[jobKeys[0]];
+          const jobData = resultData[jobKeys[0]];
+          console.log('🔍 [DEBUG] Job data for key', jobKeys[0], ':', jobData);
+          
           if (jobData && jobData.result_data) {
-            console.log('Extracted result_data from webhook format');
-            return jobData.result_data;
+            console.log('✅ [DEBUG] Found result_data in webhook format');
+            
+            // Handle nested JSON string
+            let extractedResult = jobData.result_data;
+            if (typeof extractedResult === 'string') {
+              try {
+                extractedResult = JSON.parse(extractedResult);
+                console.log('✅ [DEBUG] Parsed nested result_data:', extractedResult);
+              } catch (e) {
+                console.error('❌ [DEBUG] Failed to parse nested result_data:', e);
+              }
+            }
+            
+            return extractedResult;
           }
         }
       }
-      
-      console.error('Unable to parse result data:', resultData);
+
+      console.error('❌ [DEBUG] Unable to parse result data - no valid format found');
+      console.error('❌ [DEBUG] Final resultData state:', resultData);
       return null;
-      
+
     } catch (error) {
-      console.error('Error parsing job result:', error);
+      console.error('❌ [DEBUG] Exception in parseJobResult:', error);
+      console.error('❌ [DEBUG] Stack trace:', error.stack);
       return null;
     }
   }
